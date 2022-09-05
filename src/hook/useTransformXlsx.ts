@@ -45,7 +45,8 @@ const getRowData = (sheet: WorkSheet, rowIndex: number) => {
   while (index <= range.length - 1) {
     let letter = range[index];
     let cellVal = sheet[`${letter}${rowIndex}`]
-    result.push(cellVal.w);
+    let w = cellVal?.w ?? "";
+    result.push(w);
     index++
   }
   return result;
@@ -107,7 +108,7 @@ const useTransformXlsx = (): [(file: File | null | undefined) => void] => {
       readerFile.onload = function (e: ProgressEvent<FileReader>) {
         let fileData = e.target?.result;
         let startRowIndex = 2; // 从当前行索引开始扫描
-        let endRowIndex = 1127; // 从当前行索引结束扫描
+        let endRowIndex = 10000; // 从当前行索引结束扫描
         let _cycleIndex = 0; // 遍历循环指针
         const cacheObj: any = {}; // 暂存筛选出结果的行id、行占比的键值对 (包含了行的索引)
 
@@ -115,10 +116,15 @@ const useTransformXlsx = (): [(file: File | null | undefined) => void] => {
         const sheet = workbook.Sheets["Sheet1"];
 
         // 扫描当前表格
-        while (_cycleIndex < endRowIndex) {
+        while (_cycleIndex < endRowIndex - 1) {
           const mainIdItem = sheet[`D${startRowIndex}`]; // mainId 的行数据
           const percentItem = sheet[`T${startRowIndex}`]; // 占比的行数据
 
+          if (!mainIdItem) {
+            startRowIndex += 1;
+            _cycleIndex += 1;
+            break;
+          }
           // v: 是 xlsx 解析出每行的数据，文档：https://www.npmjs.com/package/xlsx#modifying-cell-values
           // 把对比结果放入暂存
           if (cacheObj.hasOwnProperty(mainIdItem.v)) {
